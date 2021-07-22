@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "panic.h": "c",
+        "string.h": "c"
+    }
+}
