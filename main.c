@@ -184,6 +184,7 @@ int main(int argc, const char *argv[])
     wrefresh(panel3->window);
     refresh();
     
+    
 
     int term_size[2];
     handle_node(out->root, & HTML);
@@ -197,7 +198,8 @@ int main(int argc, const char *argv[])
         update_panels();
         refresh();
         getch();
-    
+
+        assert(0 && "Hello");
     }
 
     gumbo_destroy_output(& kGumboDefaultOptions, out);

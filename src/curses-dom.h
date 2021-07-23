@@ -39,7 +39,13 @@ int terminal_did_change_size(int size[2]);
 int terminal_size_change_handled();
 
 
+#ifdef NDEBUG
+#define assert(expr)   do {} while (0)
+#else
 
+void _capture_assertion(const char *expr, const char * f, int line);
+#define assert(expr)  ((expr) ? 0 : _capture_assertion(#expr, __FILE__, __LINE__))
+#endif
 
 
 
