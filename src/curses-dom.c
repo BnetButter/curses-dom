@@ -29,8 +29,8 @@ int terminal_did_change_size(int size[2])
         size[0] = w.ws_row;
         size[1] = w.ws_col;
         window_size_changed = 0;
-        set_member_attr(HTML.scrollHeight, w.ws_row);
-        set_member_attr(HTML.scrollWidth, w.ws_col);
+        set_member_attr(HTML.offsetHeight, w.ws_row);
+        set_member_attr(HTML.offsetWidth, w.ws_col);
         return 1;
     }
     return window_size_changed;

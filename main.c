@@ -10,9 +10,7 @@
 #include <ctype.h>
 #include "gumbo.h"
 #include "curses-dom.h"
-
-#define panic(stmt, msg) if (stmt) perror(msg), exit(1)
-
+#include "panic.h"
 
 static inline int handle_node(GumboNode *node, DomElement *parent);
 
@@ -168,8 +166,8 @@ int main(int argc, const char *argv[])
     char *file_contents;
     ssize_t file_size;
 
-    panic(! (fp = fopen(argv[1], "r")), "fopen");
-    panic((file_size = alloc_buffer(fileno(fp), & file_contents)) < 0, "alloc_buffer");
+    panic_if_not((fp = fopen(argv[1], "r")), "fopen");
+    panic_if_err((file_size = alloc_buffer(fileno(fp), & file_contents)), "alloc_buffer");
     
     read_file(fp, &file_contents, file_size);
     GumboOutput *out = gumbo_parse_with_options(
@@ -178,9 +176,9 @@ int main(int argc, const char *argv[])
         file_size
     );
 
-    Panel *panel1 = Panel_new(stdscr, HTML.scrollHeight - 2, HTML.scrollWidth - 2, 1, 1);
-    Panel *panel2 = Panel_new(panel1->window, HTML.scrollHeight - 4, HTML.scrollWidth - 4, 1, 1);
-    Panel *panel3 = Panel_new(panel2->window, HTML.scrollHeight - 6, HTML.scrollWidth - 6, 1, 1);
+    Panel *panel1 = Panel_new(stdscr, HTML.offsetHeight - 2, HTML.offsetWidth - 2, 1, 1);
+    Panel *panel2 = Panel_new(panel1->window, HTML.offsetHeight - 4, HTML.offsetWidth - 4, 1, 1);
+    Panel *panel3 = Panel_new(panel2->window, HTML.offsetHeight - 6, HTML.offsetWidth - 6, 1, 1);
 
     waddstr(panel3->window, "Hello");
     wrefresh(panel3->window);
@@ -191,7 +189,7 @@ int main(int argc, const char *argv[])
     handle_node(out->root, & HTML);
     while (1) {
         if (terminal_did_change_size(term_size)) {
-            mvprintw(0, 0, "Term size: %d, %d\n", HTML.scrollWidth, HTML.scrollHeight);
+            mvprintw(0, 0, "Term size: %d, %d\n", HTML.offsetWidth, HTML.offsetHeight);
         }
 
         print_row = 0;
