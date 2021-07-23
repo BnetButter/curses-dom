@@ -1,7 +1,7 @@
 #ifndef NCURSES_DOM_H
 #define NCURSES_DOM_H
 #include "gumbo.h"
-
+#include <gmodule.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,21 +18,20 @@ typedef struct DomElement {
 
     short scrollTop;
     short scrollLeft;
+
+    struct DomElement *parent;
+    GArray *children;
 } DomElement;
 
+DomElement *DomElement_new(DomElement *parent);
 
-typedef struct {
-    char text;
-} TPixel;
 
-struct Display {
-    const short width;
-    const short height;
-    TPixel **buffer;
-};
+typedef int (*HTML_Tag_Handler)(GumboNode *, void *);
+extern HTML_Tag_Handler html_tag[GUMBO_TAG_LAST];
+
+
 
 extern DomElement HTML;
-extern struct Display display;
 
 int print_display();
 

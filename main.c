@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <curses.h>
+#include <panel.h>
 #include <gmodule.h>
 #include <ctype.h>
 #include "gumbo.h"
@@ -13,9 +14,7 @@
 #define panic(stmt, msg) if (stmt) perror(msg), exit(1)
 
 
-
-
-static inline int handle_node(GumboNode *node);
+static inline int handle_node(GumboNode *node, DomElement *parent);
 
 static inline ssize_t
 alloc_buffer(int fd, char *output[])
@@ -42,7 +41,7 @@ read_file(FILE *fp, char *buffer[], ssize_t size)
 }
 
 static inline int
-handle_document(const GumboDocument *node)
+handle_document(const GumboDocument *node, DomElement *parent)
 {
 
 }
@@ -93,11 +92,13 @@ strip_white_space(const char *text, char buffer[], size_t size)
 }
 
 static inline int
-handle_element(const GumboElement *node)
+handle_element(const GumboElement *node, DomElement *parent)
 {
     const GumboVector *children = & node->children;
+    DomElement *new_node = DomElement_new(parent);
+    
     for (int i = 0; i < children->length; i++) {
-        handle_node(children->data[i]);
+        handle_node(children->data[i], new_node);
     }
 }
 
@@ -106,38 +107,34 @@ int print_row = 0, print_col = 0;
 
 
 static inline int
-handle_text(const GumboText *node)
+handle_text(const GumboText *node, DomElement *parent)
 {
     const char *text = node->text;
-    char *buffer = malloc(strlen(text) + 1);
-    
-    strip_white_space(text, buffer, strlen(text));
-    for (int i =  0; i < strlen(buffer) + 1; i++) {
-        display.buffer[print_row][print_col].text = buffer[print_col];
-        print_col ++;
-    }
+    size_t textlen = strlen(text);
+    char *buffer = malloc(textlen + 1);
+    buffer[textlen] = 0;
+    strip_white_space(text, buffer, textlen);
+    mvprintw(print_row, 0, "%s", buffer);
     print_col = 0;
     print_row++;
     free(buffer);
 }
 
-typedef void (*tag_handler)(GumboNode *, void *);
-typedef tag_handler TagTable[GUMBO_TAG_LAST];
 
 
 static inline int
-handle_node(GumboNode *node)
+handle_node(GumboNode *node, DomElement *parent)
 {
 
     switch (node->type) {
         case GUMBO_NODE_DOCUMENT:
-            handle_document((GumboDocument *) & node->v);
+            handle_document((GumboDocument *) & node->v, parent);
             break;
         case GUMBO_NODE_ELEMENT:
-            handle_element((GumboElement *) & node->v);
+            handle_element((GumboElement *) & node->v, parent);
             break;
         case GUMBO_NODE_TEXT:
-            handle_text((GumboText *) & node->v);
+            handle_text((GumboText *) & node->v, parent);
             break;
         case GUMBO_NODE_WHITESPACE:
             return;
@@ -147,11 +144,26 @@ handle_node(GumboNode *node)
     }
 }
 
+typedef struct Panel {
+    WINDOW *window;
+    PANEL *panel;
+} Panel;
+
+
+struct Panel *
+Panel_new(WINDOW *orig, int nlines, int ncols, int begin_y, int begin_x)
+{
+    struct Panel *panel = malloc(sizeof(struct Panel));
+    panel->window = derwin(orig, nlines, ncols, begin_y, begin_x);
+    panel->panel = new_panel(panel->window);
+    box(panel->window, '|', '-');
+    return panel;
+}
+
 
 int main(int argc, const char *argv[])
 {
     assert(argc == 2);
-
     FILE *fp;
     char *file_contents;
     ssize_t file_size;
@@ -165,18 +177,29 @@ int main(int argc, const char *argv[])
         file_contents,
         file_size
     );
+
+    Panel *panel1 = Panel_new(stdscr, HTML.scrollHeight - 2, HTML.scrollWidth - 2, 1, 1);
+    Panel *panel2 = Panel_new(panel1->window, HTML.scrollHeight - 4, HTML.scrollWidth - 4, 1, 1);
+    Panel *panel3 = Panel_new(panel2->window, HTML.scrollHeight - 6, HTML.scrollWidth - 6, 1, 1);
+
+    waddstr(panel3->window, "Hello");
+    wrefresh(panel3->window);
+    refresh();
     
 
     int term_size[2];
-
-    int tmp = 0;
+    handle_node(out->root, & HTML);
     while (1) {
         if (terminal_did_change_size(term_size)) {
             mvprintw(0, 0, "Term size: %d, %d\n", HTML.scrollWidth, HTML.scrollHeight);
         }
+
         print_row = 0;
-        handle_node(out->root);
-        print_display();
+        doupdate();
+        update_panels();
+        refresh();
+        getch();
+    
     }
 
     gumbo_destroy_output(& kGumboDefaultOptions, out);
