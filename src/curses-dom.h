@@ -1,10 +1,17 @@
 #ifndef NCURSES_DOM_H
 #define NCURSES_DOM_H
-#include "gumbo.h"
+#include <curses.h>
 #include <gmodule.h>
+#include <panel.h>
+#include "gumbo.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    short row;
+    short col;
+} DomDim;
 
 typedef struct DomElement {
     const short scrollHeight;
@@ -19,8 +26,11 @@ typedef struct DomElement {
     short scrollTop;
     short scrollLeft;
 
+    GumboTag type;
     struct DomElement *parent;
     GArray *children;
+
+    PANEL *panel;
 } DomElement;
 
 DomElement *DomElement_new(DomElement *parent);
@@ -38,6 +48,9 @@ int print_display();
 int terminal_did_change_size(int size[2]);
 int terminal_size_change_handled();
 
+/*
+*/
+int handle_node(GumboNode *node, DomElement *parent);
 
 #ifdef NDEBUG
 #define assert(expr)   do {} while (0)
