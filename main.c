@@ -8,6 +8,7 @@
 #include <panel.h>
 #include <gmodule.h>
 #include <ctype.h>
+#include "katana.h"
 #include "gumbo.h"
 #include "curses-dom.h"
 #include "panic.h"
@@ -42,11 +43,6 @@ read_file(FILE *fp, char *buffer[], ssize_t size)
 int print_row = 0, print_col = 0;
 
 
-
-
-
-
-
 int main(int argc, const char *argv[])
 {
     assert(argc == 2);
@@ -58,6 +54,24 @@ int main(int argc, const char *argv[])
     panic_if_err((file_size = alloc_buffer(fileno(fp), & file_contents)), "alloc_buffer");
     
     read_file(fp, &file_contents, file_size);
+    
+    DomElement *root = domtree_new(
+        "<html>"
+            "<div id='div1'>"
+                "Hello"
+            "</div>"
+        "</html>"
+    );
+    DomElement *elt = getElementById(root, "div1");
+
+    const char* css = "selector { property: value }";
+    KatanaOutput* output = katana_parse(css, strlen(css), KatanaParserModeStylesheet);
+    
+    domtree_delete(root);
+
+    
+ 
+    /*
     GumboOutput *out = gumbo_parse_with_options(
         & kGumboDefaultOptions,
         file_contents,
@@ -87,4 +101,5 @@ int main(int argc, const char *argv[])
 
     gumbo_destroy_output(& kGumboDefaultOptions, out);
     free(file_contents);
+    */
 }

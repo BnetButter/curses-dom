@@ -42,19 +42,6 @@ int terminal_did_change_size(int size[2])
     return window_size_changed;
 }
 
-DomElement *
-DomElement_new(DomElement *parent)
-{
-    DomElement *child = malloc(sizeof(DomElement));
-    child->children = g_array_new(0, 0, sizeof(DomElement *));
-    child->parent = parent;
-    g_array_append_val(parent->children, child);
-
-    WINDOW *win = derwin(WINDOW_of(parent), 1, 1, 0, 0);
-   
-    child->panel = new_panel(win);
-    return child;
-}
 
 
 int handle_node(GumboNode *node, DomElement *parent)
@@ -90,77 +77,27 @@ request_size(DomElement *parent, DomDim request, DomDim *received)
     if (! parent) {
         return;
     }
-    wresize(WINDOW_of(parent), request.row, request.col);
-    return request_size(parent->parent, request, received);
+    
+    short height = parent->clientHeight + request.row;
+    short width = parent->clientWidth + request.col;
+    set_member_attr(parent->clientHeight, height);
+    set_member_attr(parent->clientWidth, width);
+  
 }
 
 
 static inline int
 handle_text(const GumboText *node, DomElement *parent)
 {
-    const char *text = node->text;
-    size_t textlen = strlen(text);
-    char *buffer = malloc(textlen + 1);
-    buffer[textlen] = 0;
-    strip_white_space(text, buffer, textlen);
-
-    DomDim result;
     
-    request_size(parent, (DomDim) { .row=1, .col=textlen }, & result);
-    wprintw(WINDOW_of(parent), "%s", buffer);
-    free(buffer);
 }
 
 
-static inline int
-find_next_non_whitespace(char *head)
-{
-    int offset = 0;
-    do {
-        offset ++;
-    } while (isspace(*(head + offset)));
-    return offset;
-}
-
-static inline char
-printed_char(const char **headptr, int *last_char_is_whitespace)
-{   
-    const char *head = *headptr;
-    char c;
-    
-    if (! isspace(*head)) {
-        *last_char_is_whitespace = 0;
-        (*headptr)++;
-        return c = *head;
-    }
-    else if (isspace(*head) && ! *last_char_is_whitespace) {
-        (*headptr)++;
-        *last_char_is_whitespace = 1;
-        return c = ' ';
-    }
-    else {
-        *headptr += find_next_non_whitespace(head);
-        return 0;
-    }
-}
-
-static inline int
-strip_white_space(const char *text, char buffer[], size_t size)
-{   
-    int last_is_whitespace = isspace(*text);
-    int i = 0;
-    while (*text && i < size) {
-        char c = printed_char(& text, & last_is_whitespace);
-        buffer[i] = c;
-        if (c) i++;
-    }
-    return i;
-}
 
 static inline int
 handle_element(const GumboElement *node, DomElement *parent)
 {
-    DomElement *new_node = DomElement_new(parent);
+    /*DomElement *new_node = DomElement_new(parent);
     
     if (html_tag[node->tag]) {
         void *args[] = {
@@ -173,8 +110,7 @@ handle_element(const GumboElement *node, DomElement *parent)
         for (int i = 0; i < children->length; i++) {
             handle_node(children->data[i], new_node);
         }
-
-    }
+    } */
 }
 
 static int 
