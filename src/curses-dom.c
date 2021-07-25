@@ -30,6 +30,7 @@ Handle_SIGWINCH(int signum)
 int terminal_did_change_size(int size[2])
 {
     if (window_size_changed) {
+        erase();
         struct winsize w;
         ioctl(0, TIOCGWINSZ, &w);
         size[0] = w.ws_row;
@@ -130,10 +131,15 @@ handle_panic_signal(int n)
     exit(1);
 }
 
+
+
+
+
 static void __attribute__((constructor(101)))
 curses_init() 
 {
-    initscr(); 
+    initscr();
+   
 
     struct sigaction sigwinch; // handle term resize
     struct sigaction panic;    // cannot recover, but restore terminal
@@ -146,7 +152,7 @@ curses_init()
     panic.sa_handler = handle_panic_signal;
     sigaction(SIGSEGV, & panic, NULL);
     sigaction(SIGABRT, & panic, NULL);
-    
+    sigaction(SIGTERM, & panic, NULL);    
     short row = getmaxy(stdscr);
     short col = getmaxx(stdscr);
     

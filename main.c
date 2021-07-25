@@ -11,6 +11,7 @@
 #include "katana.h"
 #include "gumbo.h"
 #include "curses-dom.h"
+#include "curses-console.h"
 #include "panic.h"
 
 
@@ -53,24 +54,39 @@ int main(int argc, const char *argv[])
     panic_if_not((fp = fopen(argv[1], "r")), "fopen");
     panic_if_err((file_size = alloc_buffer(fileno(fp), & file_contents)), "alloc_buffer");
     
+    console_init(128);
+    console_log("hello                                                                                                              10");
+    console_log("world");
+
+
     read_file(fp, &file_contents, file_size);
     
     DomElement *root = domtree_new(
         "<html>"
-            "<div id='div1'>"
+            "<div id='div1' style='border:1 red;'>"
                 "Hello"
             "</div>"
         "</html>"
     );
     DomElement *elt = getElementById(root, "div1");
+    while (1) {
+        int term_size[2];
+        if (terminal_did_change_size(term_size)) {
+            erase();
+            resizeterm(TERM_HEIGHT, TERM_WIDTH);
 
-    const char* css = "selector { property: value }";
-    KatanaOutput* output = katana_parse(css, strlen(css), KatanaParserModeStylesheet);
-    
+            console_resize(term_size);
+        }
+        doupdate();
+        update_panels();
+        refresh();
+
+        getch();
+        console_toggle();
+    }
     domtree_delete(root);
-
     
- 
+    
     /*
     GumboOutput *out = gumbo_parse_with_options(
         & kGumboDefaultOptions,
@@ -83,7 +99,7 @@ int main(int argc, const char *argv[])
     
     
 
-    int term_size[2];
+    
     handle_node(out->root, & HTML);
     while (1) {
         if (terminal_did_change_size(term_size)) {

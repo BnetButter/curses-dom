@@ -25,6 +25,9 @@ extern HTML_Tag_Handler html_tag[GUMBO_TAG_LAST];
 
 extern DomElement HTML;
 
+#define TERM_HEIGHT     HTML.offsetHeight
+#define TERM_WIDTH      HTML.offsetWidth
+
 int print_display();
 
 int terminal_did_change_size(int size[2]);
@@ -33,8 +36,6 @@ int terminal_size_change_handled();
 /*
 */
 int handle_node(GumboNode *node, DomElement *parent);
-
-
 
 
 

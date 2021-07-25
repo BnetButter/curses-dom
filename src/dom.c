@@ -36,23 +36,34 @@ style_new(const char *value)
 {
     KatanaOutput *output = katana_parse(value, strlen(value), KatanaParserModeDeclarationList);
     GHashTable *table = g_hash_table_new(g_str_hash, g_str_equal);
+
+    KatanaArray *decls = output->declarations;
+    for (int i = 0; i < decls->length; i++) {
+        KatanaDeclaration *decl = decls->data[i];
         
-    
+        for (int j = 0; j < decl->values->length; j++) {
+            KatanaValue *value = decl->values->data[j];
+            assert(value);
+        }
+        assert(decl);
+    }    
     katana_destroy_output(output);
+}
+
+static inline void
+style_delete()
+{
 
 }
 
 static inline void
 DomText_init(struct DomText *self, const char *text)
 {
-    self->text = g_string_new("");
-    /*
     size_t slen = strlen(text);
     char *buffer = malloc(slen + 1);
     strip_white_space(text, buffer, slen);
     self->text = g_string_new(buffer);
     free(buffer);
-    */
 }
 
 static inline void
